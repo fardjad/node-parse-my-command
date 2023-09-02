@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "parse-my-command": "file:.."
+  }
+}
