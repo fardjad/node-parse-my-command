@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [],
   "homepage": "https://github.com/fardjad/node-parse-my-command",
