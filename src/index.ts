@@ -105,6 +105,11 @@ export const partialParse = (
     commandsMap.set(parserCommand, command);
 
     copyCommandSettings(command, parserCommand);
+    parserCommand.exitOverride((error) => {
+      if (error.code !== "commander.helpDisplayed") {
+        throw error;
+      }
+    });
 
     for (const option of command.options) {
       parserCommand.addOption(cloneOption(option));
@@ -124,9 +129,7 @@ export const partialParse = (
     });
 
     for (const subcommand of command.commands as Command[]) {
-      const parserSubcommand = parserCommand
-        .command(subcommand.name())
-        .exitOverride();
+      const parserSubcommand = parserCommand.command(subcommand.name());
       createParserCommand(parserSubcommand, subcommand);
     }
 
