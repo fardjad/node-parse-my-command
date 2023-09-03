@@ -52,3 +52,15 @@ console.log(missingOptions.get(childCommand)); // Set(1) { 'optionC' }
 ```
 
 More examples can be found in the [examples](/examples/) directory.
+
+## How It Works and Limitations
+
+This module works by creating a (best-effort) clone of the command and its
+subcommands, setting the actions to no-op functions, and then parsing the
+`argv` with the cloned instance. This approach might have some limitations:
+
+1. The implementation might break if Commander.js changes its internals
+2. Custom argument and option processors are assumed to be pure functions
+3. Hooks attached to the commands will not be called
+4. Some edge cases might not be handled correctly (Please feel free to open an
+   issue/PR if you find one)

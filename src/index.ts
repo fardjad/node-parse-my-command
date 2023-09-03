@@ -1,5 +1,10 @@
 import camelCase from "camelcase";
-import { type OptionValues, Command, type ParseOptions } from "commander";
+import {
+  type OptionValues,
+  Command,
+  type ParseOptions,
+  Option,
+} from "commander";
 
 export const findMissingOptions = (
   command: Command,
@@ -44,6 +49,43 @@ export type PartialParseResult = {
   providedOptions: Map<Command, OptionValues>;
 };
 
+const copyCommandSettings = (source: Command, target: Command) => {
+  for (const keysToCopy of [
+    "_args",
+    "_combineFlagAndOptionalValue",
+    "_allowUnknownOption",
+    "_allowExcessArguments",
+    "_enablePositionalOptions",
+    "_passThroughOptions",
+  ] as const) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    (target as any)[keysToCopy] = (source as any)[keysToCopy];
+  }
+
+  target.name(source.name());
+  target.aliases(source.aliases());
+};
+
+const cloneOption = (option: Option) => {
+  const newOption = new Option(option.flags, option.description);
+  newOption.default(option.defaultValue, option.defaultValueDescription);
+  if (option.argChoices) {
+    newOption.choices(option.argChoices);
+  }
+
+  newOption.makeOptionMandatory(false);
+  newOption.preset(option.parseArg);
+  newOption.conflicts(
+    (option as Option & { conflictsWith: string[] }).conflictsWith,
+  );
+  newOption.env((option as Option & { envVar: string }).envVar);
+  if (option.parseArg) {
+    newOption.argParser(option.parseArg);
+  }
+
+  return newOption;
+};
+
 /**
  * Partially parse argv for a command without executing the action. @see {@link Command.parse}
  *
@@ -61,8 +103,10 @@ export const partialParse = (
   const createParserCommand = (parserCommand: Command, command: Command) => {
     commandsMap.set(parserCommand, command);
 
+    copyCommandSettings(command, parserCommand);
+
     for (const option of command.options) {
-      parserCommand.option(option.flags, option.description);
+      parserCommand.addOption(cloneOption(option));
     }
 
     parserCommand.hook("preSubcommand", (thisCommand, actionCommand) => {
