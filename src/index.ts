@@ -51,10 +51,11 @@ export type PartialParseResult = {
 
 const copyCommandSettings = (source: Command, target: Command) => {
   for (const keysToCopy of [
+    "_allowExcessArguments",
+    "_allowUnknownOption",
     "_args",
     "_combineFlagAndOptionalValue",
-    "_allowUnknownOption",
-    "_allowExcessArguments",
+    "_defaultCommandName",
     "_enablePositionalOptions",
     "_passThroughOptions",
   ] as const) {
