@@ -78,20 +78,26 @@ const disableCommandOutput = (command: Command) => {
 
 const cloneOption = (option: Option) => {
   const newOption = new Option(option.flags, option.description);
-  newOption.default(option.defaultValue, option.defaultValueDescription);
-  if (option.argChoices) {
-    newOption.choices(option.argChoices);
-  }
-
   newOption.makeOptionMandatory(false);
+  newOption.default(option.defaultValue, option.defaultValueDescription);
+
   newOption.preset((option as Option & { presetArg: unknown }).presetArg);
-  newOption.conflicts(
-    (option as Option & { conflictsWith: string[] }).conflictsWith,
-  );
   newOption.env((option as Option & { envVar: string }).envVar);
   if (option.parseArg) {
     newOption.argParser(option.parseArg);
   }
+
+  if (option.argChoices) {
+    newOption.choices(option.argChoices);
+  }
+
+  newOption.conflicts(
+    (option as Option & { conflictsWith: string[] }).conflictsWith,
+  );
+
+  (newOption as Option & { implied: unknown }).implied = (
+    option as Option & { implied: unknown }
+  ).implied;
 
   return newOption;
 };

@@ -55,13 +55,14 @@ More examples can be found in the [examples](/examples/) directory.
 
 ## Error Handling
 
-`partialParse` throws errors in the following cases:
+`partialParse` throws in the following cases:
 
 1. In all cases where your `Command` with the
    [default `exitCallback`](https://github.com/tj/commander.js#override-exit-and-output-handling)
    would throw an error (e.g. when displaying help)
 2. In all cases where your command would throw an error before an action is
-   executed (e.g. when a required option is missing)
+   executed except for when a required `Option` (not to be confused with an
+   `Argument`) is missing (missing options are returned in the result instead).
 
 ## How It Works and Limitations
 
