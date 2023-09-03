@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [
     "parser",
@@ -44,7 +44,7 @@
     "lint": "prettier --check . && eslint --ext .js --ext .cjs --ext .mjs --ext .ts --ext .cts --ext .mts --ext .d.ts .",
     "prepare": "tsup ./src/index.ts --format esm,cjs --dts --clean --sourcemap inline --silent",
     "pretest": "tsc",
-    "test": "glob -c \"tsx --test --test-reporter spec\" \"src/**/*.test.ts\"",
+    "test": "glob -c \"tsx --test --test-reporter spec\" \"test/**/*.test.ts\"",
     "posttest": "npm run lint",
     "test:coverage": "c8 npm run test"
   },

@@ -1,4 +1,4 @@
-import { noop } from "./noop";
+import { noop } from "./noop.ts";
 import camelCase from "camelcase";
 import {
   type OptionValues,
@@ -69,6 +69,14 @@ const copyCommandSettings = (source: Command, target: Command) => {
 
   target.name(source.name());
   target.aliases(source.aliases());
+  target.version(
+    (source as Command & { version: () => string }).version(),
+    source.options.find(
+      (option) =>
+        option.attributeName() ===
+        (source as Command & { _versionOptionName: string })._versionOptionName,
+    )?.flags,
+  );
 };
 
 const disableCommandOutput = (command: Command) => {
@@ -151,10 +159,7 @@ export const partialParse = (
     return parserCommand;
   };
 
-  const parserCommand = createParserCommand(
-    new Command().exitOverride(),
-    command,
-  );
+  const parserCommand = createParserCommand(new Command(), command);
   parserCommand.parse(argv, options);
 
   const missingOptions = matchedCommand
