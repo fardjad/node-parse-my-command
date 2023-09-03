@@ -84,7 +84,7 @@ const cloneOption = (option: Option) => {
   }
 
   newOption.makeOptionMandatory(false);
-  newOption.preset(option.parseArg);
+  newOption.preset((option as Option & { presetArg: unknown }).presetArg);
   newOption.conflicts(
     (option as Option & { conflictsWith: string[] }).conflictsWith,
   );
