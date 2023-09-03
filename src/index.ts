@@ -20,8 +20,11 @@ export const findMissingOptions = (
     const missingOptions = new Set<string>();
     const providedOptions = providedOptionsByCommand.get(currentCommand);
     for (const option of currentCommand.options) {
-      const key = camelCase((option.long ?? option.short)!);
-      if (providedOptions?.[key]) {
+      const key = option.negate
+        ? camelCase(option.long!.replace(/^--no-/, ""))
+        : camelCase((option.long ?? option.short)!);
+
+      if (providedOptions?.[key] !== undefined) {
         continue;
       }
 
