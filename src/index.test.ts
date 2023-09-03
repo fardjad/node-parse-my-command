@@ -1,10 +1,8 @@
 import { partialParse, findMissingOptions } from "./index.ts";
+import { noop } from "./noop.ts";
 import { Command } from "commander";
 import assert from "node:assert";
 import test from "node:test";
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
 
 // To test the overriden action function
 const rootCommand = new Command();

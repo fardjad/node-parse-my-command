@@ -53,6 +53,16 @@ console.log(missingOptions.get(childCommand)); // Set(1) { 'optionC' }
 
 More examples can be found in the [examples](/examples/) directory.
 
+## Error Handling
+
+`partialParse` throws errors in the following cases:
+
+1. In all cases where your `Command` with the
+   [default `exitCallback`](https://github.com/tj/commander.js#override-exit-and-output-handling)
+   would throw an error (e.g. when displaying help)
+2. In all cases where your command would throw an error before an action is
+   executed (e.g. when a required option is missing)
+
 ## How It Works and Limitations
 
 This module works by creating a (best-effort) clone of the command and its

@@ -1,3 +1,4 @@
+import { noop } from "./noop";
 import camelCase from "camelcase";
 import {
   type OptionValues,
@@ -67,6 +68,14 @@ const copyCommandSettings = (source: Command, target: Command) => {
   target.aliases(source.aliases());
 };
 
+const disableCommandOutput = (command: Command) => {
+  command.configureOutput({
+    writeOut: noop,
+    writeErr: noop,
+    outputError: noop,
+  });
+};
+
 const cloneOption = (option: Option) => {
   const newOption = new Option(option.flags, option.description);
   newOption.default(option.defaultValue, option.defaultValueDescription);
@@ -105,11 +114,8 @@ export const partialParse = (
     commandsMap.set(parserCommand, command);
 
     copyCommandSettings(command, parserCommand);
-    parserCommand.exitOverride((error) => {
-      if (error.code !== "commander.helpDisplayed") {
-        throw error;
-      }
-    });
+    disableCommandOutput(parserCommand);
+    parserCommand.exitOverride();
 
     for (const option of command.options) {
       parserCommand.addOption(cloneOption(option));
