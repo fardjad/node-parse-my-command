@@ -5,6 +5,7 @@ import {
   Command,
   type ParseOptions,
   Option,
+  type OptionValueSource,
 } from "commander";
 
 export const findMissingOptions = (
@@ -51,6 +52,10 @@ export type PartialParseResult = {
    * A map of commands to the options provided for that command
    */
   providedOptions: Map<Command, OptionValues>;
+  /**
+   * A map of commands to a map of option keys to the source of the option value
+   */
+  providedOptionsSources: Map<Command, Map<string, string | undefined>>;
 };
 
 const copyCommandSettings = (source: Command, target: Command) => {
@@ -124,8 +129,27 @@ export const partialParse = (
   options?: ParseOptions,
 ): PartialParseResult => {
   const providedOptions = new Map<Command, OptionValues>();
+  const providedOptionsSources = new Map<
+    Command,
+    Map<string, string | undefined>
+  >();
   const commandsMap = new Map<Command, Command>();
   let matchedCommand: Command | undefined;
+
+  const setProvidedOptionSource = (
+    command: Command,
+    optionKey: string,
+    source: OptionValueSource | undefined,
+  ) => {
+    if (!source) {
+      return;
+    }
+
+    const sourcesMap =
+      providedOptionsSources.get(command) ?? new Map<string, string>();
+    sourcesMap.set(optionKey, source);
+    providedOptionsSources.set(command, sourcesMap);
+  };
 
   const createParserCommand = (parserCommand: Command, command: Command) => {
     commandsMap.set(parserCommand, command);
@@ -139,8 +163,17 @@ export const partialParse = (
     }
 
     parserCommand.hook("preSubcommand", (thisCommand, actionCommand) => {
-      providedOptions.set(commandsMap.get(parserCommand)!, thisCommand.opts());
-      providedOptions.set(commandsMap.get(actionCommand)!, thisCommand.opts());
+      for (const cmd of [thisCommand, actionCommand]) {
+        providedOptions.set(commandsMap.get(cmd)!, cmd.opts());
+
+        for (const optionKey of Object.keys(cmd.opts())) {
+          setProvidedOptionSource(
+            cmd,
+            optionKey,
+            cmd.getOptionValueSource(optionKey),
+          );
+        }
+      }
     });
 
     parserCommand.action(() => {
@@ -148,6 +181,15 @@ export const partialParse = (
         commandsMap.get(parserCommand)!,
         parserCommand.opts(),
       );
+
+      for (const optionKey of Object.keys(parserCommand.opts())) {
+        setProvidedOptionSource(
+          commandsMap.get(parserCommand)!,
+          optionKey,
+          parserCommand.getOptionValueSource(optionKey),
+        );
+      }
+
       matchedCommand = command;
     });
 
@@ -166,5 +208,10 @@ export const partialParse = (
     ? findMissingOptions(matchedCommand, providedOptions)
     : new Map<Command, Set<string>>();
 
-  return { matchedCommand, missingOptions, providedOptions };
+  return {
+    matchedCommand,
+    missingOptions,
+    providedOptions,
+    providedOptionsSources,
+  };
 };

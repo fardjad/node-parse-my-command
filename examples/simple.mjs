@@ -18,11 +18,14 @@ const childCommand = rootCommand
 
 const argv = ["node", "index.mjs", "-a", "value1", "child", "-b", "value2"];
 
-const { matchedCommand, providedOptions, missingOptions } = partialParse(
-  rootCommand,
-  argv,
-);
+const {
+  matchedCommand,
+  providedOptions,
+  missingOptions,
+  providedOptionsSources,
+} = partialParse(rootCommand, argv);
 
 console.log(matchedCommand.name()); // child
 console.log(providedOptions.get(childCommand)); // { optionB: 'value2' }
 console.log(missingOptions.get(childCommand)); // Set(1) { 'optionC' }
+console.log(providedOptionsSources.get(childCommand)); // Map(1) { 'optionB' => 'cli' }

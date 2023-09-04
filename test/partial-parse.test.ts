@@ -416,6 +416,63 @@ await test("options-required", () => {
   });
 });
 
+await test("options-sources-root", () => {
+  const program = new Command();
+
+  program
+    .name("options-source-root")
+    // Missing
+    .requiredOption("-s, --size <size>", "pizza size")
+    // Default
+    .option("-g, --vegeterian", "vegeterian pizza", false)
+    // Provided in command line
+    .requiredOption("-c, --cheese <type>", "pizza must have cheese");
+
+  const { matchedCommand, providedOptionsSources } = partialParse(program, [
+    "node",
+    "options-sources-root.js",
+    "-c",
+    "mozzarella",
+  ]);
+
+  assert.deepStrictEqual(
+    providedOptionsSources.get(matchedCommand!),
+    new Map([
+      ["vegeterian", "default"],
+      ["cheese", "cli"],
+    ]),
+  );
+});
+
+await test("options-sources-subcommand", () => {
+  const program = new Command();
+
+  program
+    .command("pizza")
+    // Missing
+    .requiredOption("-s, --size <size>", "pizza size")
+    // Default
+    .option("-g, --vegeterian", "vegeterian pizza", false)
+    // Provided in command line
+    .requiredOption("-c, --cheese <type>", "pizza must have cheese");
+
+  const { matchedCommand, providedOptionsSources } = partialParse(program, [
+    "node",
+    "options-sources-subcommand.js",
+    "pizza",
+    "-c",
+    "mozzarella",
+  ]);
+
+  assert.deepStrictEqual(
+    providedOptionsSources.get(matchedCommand!),
+    new Map([
+      ["vegeterian", "default"],
+      ["cheese", "cli"],
+    ]),
+  );
+});
+
 await test("options-variadic", () => {
   const createProgram = () => {
     const program = new Command();

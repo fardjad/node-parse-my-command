@@ -11,7 +11,7 @@ Parse `argv` with **Commander.js** without executing the command
 <hr />
 
 [Commander.js](https://github.com/tj/commander.js) doesn't support parsing
-`argv` without executing the command. This package provides a workaround for that.
+`argv` without executing the command. This module provides a workaround for that.
 
 ## Installation
 
@@ -41,14 +41,17 @@ const childCommand = rootCommand
 
 const argv = ["node", "index.mjs", "-a", "value1", "child", "-b", "value2"];
 
-const { matchedCommand, providedOptions, missingOptions } = partialParse(
-  rootCommand,
-  argv,
-);
+const {
+  matchedCommand,
+  providedOptions,
+  missingOptions,
+  providedOptionsSources,
+} = partialParse(rootCommand, argv);
 
 console.log(matchedCommand.name()); // child
 console.log(providedOptions.get(childCommand)); // { optionB: 'value2' }
 console.log(missingOptions.get(childCommand)); // Set(1) { 'optionC' }
+console.log(providedOptionsSources.get(childCommand)); // Map(1) { 'optionB' => 'cli' }
 ```
 
 More examples can be found in the [examples](/examples/) directory.
@@ -62,7 +65,8 @@ More examples can be found in the [examples](/examples/) directory.
    would throw an error (e.g. when displaying help)
 2. In all cases where your command would throw an error before an action is
    executed except for when a required `Option` (not to be confused with an
-   `Argument`) is missing (missing options are returned in the result instead).
+   `Argument`) is missing (missing options are returned in the result object
+   instead).
 
 ## How It Works and Limitations
 
@@ -72,6 +76,6 @@ subcommands, setting the actions to no-op functions, and then parsing the
 
 1. The implementation might break if Commander.js changes its internals
 2. Custom argument and option processors are assumed to be pure functions
-3. Hooks attached to the commands will not be called
-4. Some edge cases might not be handled correctly (Please feel free to open an
-   issue/PR if you find one)
+3. Hook listeners attached to the commands will be ignored
+4. Some edge cases might not be handled correctly (please feel free to open an
+   issue/PR in case you find any)
