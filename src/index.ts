@@ -55,7 +55,10 @@ export type PartialParseResult = {
   /**
    * A map of commands to a map of option keys to the source of the option value
    */
-  providedOptionsSources: Map<Command, Map<string, string | undefined>>;
+  providedOptionsSources: Map<
+    Command,
+    Map<string, OptionValueSource | undefined>
+  >;
 };
 
 const copyCommandSettings = (source: Command, target: Command) => {
@@ -131,7 +134,7 @@ export const partialParse = (
   const providedOptions = new Map<Command, OptionValues>();
   const providedOptionsSources = new Map<
     Command,
-    Map<string, string | undefined>
+    Map<string, OptionValueSource | undefined>
   >();
   const commandsMap = new Map<Command, Command>();
   let matchedCommand: Command | undefined;
@@ -146,7 +149,8 @@ export const partialParse = (
     }
 
     const sourcesMap =
-      providedOptionsSources.get(command) ?? new Map<string, string>();
+      providedOptionsSources.get(command) ??
+      new Map<string, OptionValueSource>();
     sourcesMap.set(optionKey, source);
     providedOptionsSources.set(command, sourcesMap);
   };
