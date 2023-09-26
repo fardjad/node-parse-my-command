@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [
     "parser",
@@ -59,9 +59,9 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.2.0",
-    "@types/node": "^20.6.5",
-    "@typescript-eslint/eslint-plugin": "^6.7.2",
-    "@typescript-eslint/parser": "^6.7.2",
+    "@types/node": "^20.7.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
     "c8": "^8.0.1",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
