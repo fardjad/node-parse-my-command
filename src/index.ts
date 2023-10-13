@@ -65,7 +65,6 @@ const copyCommandSettings = (source: Command, target: Command) => {
   for (const keysToCopy of [
     "_allowExcessArguments",
     "_allowUnknownOption",
-    "_args",
     "_combineFlagAndOptionalValue",
     "_defaultCommandName",
     "_enablePositionalOptions",
@@ -77,14 +76,21 @@ const copyCommandSettings = (source: Command, target: Command) => {
 
   target.name(source.name());
   target.aliases(source.aliases());
-  target.version(
-    (source as Command & { version: () => string }).version(),
-    source.options.find(
-      (option) =>
-        option.attributeName() ===
-        (source as Command & { _versionOptionName: string })._versionOptionName,
-    )?.flags,
-  );
+  for (const argument of source.registeredArguments) {
+    target.addArgument(argument);
+  }
+
+  if (source.version()) {
+    target.version(
+      source.version()!,
+      source.options.find(
+        (option) =>
+          option.attributeName() ===
+          (source as Command & { _versionOptionName: string })
+            ._versionOptionName,
+      )?.flags,
+    );
+  }
 };
 
 const disableCommandOutput = (command: Command) => {
