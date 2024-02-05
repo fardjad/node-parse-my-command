@@ -169,6 +169,15 @@ export const partialParse = (
     parserCommand.exitOverride();
 
     for (const option of command.options) {
+      // Skip adding the option if it's already registered
+      if (
+        parserCommand.options.some(
+          (parserCommandOption) => parserCommandOption.flags === option.flags,
+        )
+      ) {
+        continue;
+      }
+
       parserCommand.addOption(cloneOption(option));
     }
 
