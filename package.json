@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.3.25",
+  "version": "0.3.26",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [
     "parser",
@@ -71,7 +71,7 @@
     "glob": "^10.3.12",
     "npm-check-updates": "^16.14.18",
     "prettier": "^3.2.5",
-    "prettier-plugin-packagejson": "^2.4.13",
+    "prettier-plugin-packagejson": "^2.4.14",
     "tsup": "^8.0.2",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3"
