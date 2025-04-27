@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.3.31",
+  "version": "0.4.0",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [
     "parser",
@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "camelcase": "^8.0.0",
-    "commander": "^12.1.0"
+    "commander": "^13.1.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",

@@ -491,12 +491,12 @@ await test("options-variadic", () => {
   );
   validatePartialParse(
     createProgram(),
-    "node options-variadic.js --letter=A -n80 operand",
+    "node options-variadic.js --letter=A -n80",
     "options-variadic",
   );
   validatePartialParse(
     createProgram(),
-    "node options-variadic.js --letter -n 1 -n 2 3 -- operand",
+    "node options-variadic.js --letter -n 1 -n 2 3",
     "options-variadic",
   );
 });
