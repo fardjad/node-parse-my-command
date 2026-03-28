@@ -1,8 +1,7 @@
+import { expect, test } from "bun:test";
+import { Command } from "commander";
 import { findMissingOptions } from "../src/index.js";
 import { noop } from "../src/noop.js";
-import { Command } from "commander";
-import assert from "node:assert";
-import test from "node:test";
 
 await test("findMissingOptions", async () => {
   const rootCommand = new Command();
@@ -22,11 +21,8 @@ await test("findMissingOptions", async () => {
     ]),
   );
 
-  assert.deepStrictEqual(
-    [...missingOptions.entries()],
-    [
-      [childCommand, new Set()],
-      [rootCommand, new Set(["optionA"])],
-    ],
-  );
+  expect([...missingOptions.entries()]).toEqual([
+    [childCommand, new Set()],
+    [rootCommand, new Set(["optionA"])],
+  ]);
 });

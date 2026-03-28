@@ -15,89 +15,129 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: oven-sh/setup-bun@main
+        with:
+          bun-version: latest
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Tests
+        run: bun run test
+      - name: Build
+        run: bun run build
+  consumer-smoke:
+    runs-on: ubuntu-latest
+    needs: test
     strategy:
       matrix:
-        node: ["lts/*", latest]
+        node: ["20", "lts/*", latest]
       fail-fast: true
     steps:
       - uses: actions/checkout@main
+      - uses: oven-sh/setup-bun@main
+        with:
+          bun-version: latest
       - uses: actions/setup-node@main
         with:
           node-version: ${{ matrix.node }}
           check-latest: true
-      - name: Cache node modules
-        uses: actions/cache@main
-        env:
-          cache-name: cache-node-${{ matrix.node }}-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Install
-        run: npm ci
-      - name: Tests
-        run: npm test
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+      - name: Smoke test Node consumers
+        run: |
+          node --input-type=module -e "const mod = await import('./dist/index.js'); if (typeof mod.partialParse !== 'function' || typeof mod.findMissingOptions !== 'function') throw new Error('Missing ESM exports');"
+          node -e "const mod = require('./dist/index.cjs'); if (typeof mod.partialParse !== 'function' || typeof mod.findMissingOptions !== 'function') throw new Error('Missing CJS exports');"
   version-check:
     runs-on: ubuntu-latest
-    needs: test
+    needs:
+      - test
+      - consumer-smoke
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
     outputs:
       changed: ${{ steps.check.outputs.changed }}
       version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@main
-      - id: check
-        uses: EndBug/version-check@v2
+      - uses: oven-sh/setup-bun@main
         with:
-          diff-search: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          bun-version: latest
+      - id: check
+        shell: bun {0}
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          const currentPackage = await Bun.file("package.json").json();
+          const currentVersion = currentPackage.version;
+          const beforeSha = process.env.GITHUB_EVENT_BEFORE;
+          let previousVersion;
+
+          if (beforeSha && !/^0+$/.test(beforeSha)) {
+            const response = await fetch(
+              `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/contents/package.json?ref=${beforeSha}`,
+              {
+                headers: {
+                  Accept: "application/vnd.github+json",
+                  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                },
+              },
+            );
+
+            if (response.ok) {
+              const previousPackage = JSON.parse(
+                Buffer.from((await response.json()).content, "base64").toString("utf8"),
+              );
+              previousVersion = previousPackage.version;
+            }
+          }
+
+          const changed = previousVersion !== currentVersion;
+          await Bun.write(
+            process.env.GITHUB_OUTPUT,
+            `changed=${changed}\nversion=${currentVersion}\n`,
+          );
   release:
     runs-on: ubuntu-latest
     needs: version-check
     if: needs.version-check.outputs.changed == 'true'
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@main
-      - name: "Add $GITHUB_WORKSPACE to git safe directories"
+      - name: Create release
         run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE || exit 1
-      - uses: rickstaa/action-create-tag@main
-        with:
-          tag: v${{ needs.version-check.outputs.version }}
-          message: v${{ needs.version-check.outputs.version }}
-      - uses: ncipollo/release-action@main
-        with:
-          name: v${{ needs.version-check.outputs.version }}
-          tag: v${{ needs.version-check.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          gh release create "v${{ needs.version-check.outputs.version }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v${{ needs.version-check.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   npm-publish:
     runs-on: ubuntu-latest
-    needs: release
+    needs:
+      - release
+      - version-check
     if: needs.version-check.outputs.changed == 'true'
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@main
+      - uses: oven-sh/setup-bun@main
+        with:
+          bun-version: latest
       - uses: actions/setup-node@main
         with:
           node-version: "lts/*"
           check-latest: true
           registry-url: "https://registry.npmjs.org"
-      - uses: actions/cache@main
-        env:
-          cache-name: cache-node-${{ matrix.node }}-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Install
-        run: |
-          set -e
-          npm ci
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
       - name: Publish
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

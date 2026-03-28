@@ -1,6 +1,6 @@
+import { expect } from "bun:test";
+import { type Command, CommanderError } from "commander";
 import { partialParse } from "../src/index.js";
-import { CommanderError, type Command } from "commander";
-import assert from "node:assert";
 
 export const validatePartialParse = (
   rootCommand: Command,
@@ -30,7 +30,12 @@ export const validatePartialParse = (
     rootCommand.parse(argv);
   } catch (error) {
     if (error instanceof CommanderError) {
-      assert.strictEqual(error.code, partialParseErrorCode);
+      expect(partialParseErrorCode).toBeDefined();
+      if (partialParseErrorCode === undefined) {
+        throw new Error("Expected partialParse to throw a CommanderError");
+      }
+
+      expect(error.code).toBe(partialParseErrorCode);
     }
 
     return;
@@ -38,11 +43,17 @@ export const validatePartialParse = (
 
   const validateOptions = (command: Command) => {
     const options = command.opts();
-    assert.deepStrictEqual(providedOptions.get(command) ?? {}, options);
+    expect(providedOptions.get(command) ?? {}).toEqual(options);
 
     for (const key of Object.keys(options)) {
       if (!missingOptions.has(command)) continue;
-      assert.ok(!missingOptions.get(command)!.has(key));
+      const missingOptionsForCommand = missingOptions.get(command);
+      expect(missingOptionsForCommand).toBeDefined();
+      if (!missingOptionsForCommand) {
+        throw new Error("Expected missing options for command");
+      }
+
+      expect(missingOptionsForCommand.has(key)).toBe(false);
     }
 
     for (const subcommand of command.commands) {
@@ -52,6 +63,10 @@ export const validatePartialParse = (
 
   validateOptions(rootCommand);
 
-  assert.ok(matchedCommand);
-  assert.strictEqual(matchedCommand.name(), expectedMatchedCommandName);
+  expect(matchedCommand).toBeDefined();
+  if (!matchedCommand) {
+    throw new Error("Expected a matched command");
+  }
+
+  expect(matchedCommand.name()).toBe(expectedMatchedCommandName);
 };

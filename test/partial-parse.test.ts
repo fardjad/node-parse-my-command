@@ -1,10 +1,8 @@
-/* eslint-disable unicorn/consistent-function-scoping */
+import { expect, test } from "bun:test";
+import { Argument, Command, InvalidArgumentError, Option } from "commander";
 import { partialParse } from "../src/index.js";
 import { noop } from "../src/noop.js";
 import { validatePartialParse } from "./validate-partial-parse.js";
-import { Argument, Command, InvalidArgumentError, Option } from "commander";
-import assert from "node:assert";
-import { test } from "node:test";
 
 // These tests are based on the examples in Commander.js repository
 
@@ -26,10 +24,12 @@ await test("alias", () => {
   validatePartialParse(program, "node alias.js show file", "print");
 });
 
-await test("arguments-custom-processing", (t) => {
-  const customParseInt = t.mock.fn((value: string) =>
-    Number.parseInt(value, 10),
-  );
+await test("arguments-custom-processing", () => {
+  let customParseIntCalls = 0;
+  const customParseInt = (value: string) => {
+    customParseIntCalls += 1;
+    return Number.parseInt(value, 10);
+  };
 
   const program = new Command();
   program
@@ -43,7 +43,7 @@ await test("arguments-custom-processing", (t) => {
   );
 
   // One for the original command, one for the parser command
-  assert.strictEqual(customParseInt.mock.calls.length, 2);
+  expect(customParseIntCalls).toBe(2);
 });
 
 await test("arguments-extra", () => {
@@ -79,11 +79,20 @@ await test("arguments-extra", () => {
 await test("help", () => {
   const program = new Command();
 
-  assert.throws(
-    () => {
-      partialParse(program, ["node", "help.js", "--help"]);
-    },
-    { code: "commander.helpDisplayed" },
+  let error: unknown;
+  try {
+    partialParse(program, ["node", "help.js", "--help"]);
+  } catch (thrownError) {
+    error = thrownError;
+  }
+
+  expect(error).toBeDefined();
+  if (!(error instanceof Error)) {
+    throw new Error("Expected an error");
+  }
+
+  expect((error as Error & { code?: string }).code).toBe(
+    "commander.helpDisplayed",
   );
 });
 
@@ -204,7 +213,7 @@ await test("options-custom-processing", () => {
     return parsedValue;
   }
 
-  function increaseVerbosity(dummyValue: string, previous: number) {
+  function increaseVerbosity(_dummyValue: string, previous: number) {
     return previous + 1;
   }
 
@@ -261,11 +270,11 @@ await test("options-env", () => {
       .env("PARSE_MY_COMMAND_PORT"),
   );
 
-  process.env.PARSE_MY_COMMAND_PORT = "8080";
+  Bun.env.PARSE_MY_COMMAND_PORT = "8080";
 
   validatePartialParse(program, "node options-env.js", "options-env");
 
-  delete process.env.PARSE_MY_COMMAND_PORT;
+  delete Bun.env.PARSE_MY_COMMAND_PORT;
 });
 
 await test("options-extra", () => {
@@ -400,8 +409,8 @@ await test("options-negatable", () => {
     "--no-cheese",
   ]);
 
-  assert.deepStrictEqual([...providedOptions.values()], [{ cheese: false }]);
-  assert.deepStrictEqual([...missingOptions.values()], [new Set()]);
+  expect([...providedOptions.values()]).toEqual([{ cheese: false }]);
+  expect([...missingOptions.values()]).toEqual([new Set()]);
 });
 
 await test("options-required", () => {
@@ -411,9 +420,9 @@ await test("options-required", () => {
     .name("options-required")
     .requiredOption("-c, --cheese <type>", "pizza must have cheese");
 
-  assert.doesNotThrow(() => {
+  expect(() => {
     partialParse(program, ["node", "options-required.js"]);
-  });
+  }).not.toThrow();
 });
 
 await test("options-sources-root", () => {
@@ -434,9 +443,12 @@ await test("options-sources-root", () => {
     "-c",
     "mozzarella",
   ]);
+  expect(matchedCommand).toBeDefined();
+  if (!matchedCommand) {
+    throw new Error("Expected a matched command");
+  }
 
-  assert.deepStrictEqual(
-    providedOptionsSources.get(matchedCommand!),
+  expect(providedOptionsSources.get(matchedCommand)).toEqual(
     new Map([
       ["vegeterian", "default"],
       ["cheese", "cli"],
@@ -463,9 +475,12 @@ await test("options-sources-subcommand", () => {
     "-c",
     "mozzarella",
   ]);
+  expect(matchedCommand).toBeDefined();
+  if (!matchedCommand) {
+    throw new Error("Expected a matched command");
+  }
 
-  assert.deepStrictEqual(
-    providedOptionsSources.get(matchedCommand!),
+  expect(providedOptionsSources.get(matchedCommand)).toEqual(
     new Map([
       ["vegeterian", "default"],
       ["cheese", "cli"],

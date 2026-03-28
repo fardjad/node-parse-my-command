@@ -1,4 +1,3 @@
-/* eslint-disable capitalized-comments */
 import { Command } from "commander";
 import { partialParse } from "parse-my-command";
 
@@ -12,7 +11,7 @@ rootCommand
   .command("child")
   .requiredOption("-b, --option-b <value>", "option b")
   .requiredOption("-c, --option-c <value>", "option c")
-  .action((options, command) => {
+  .action((_options, command) => {
     console.log("options", command.optsWithGlobals());
   });
 

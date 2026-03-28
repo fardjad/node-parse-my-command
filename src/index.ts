@@ -1,12 +1,36 @@
-import { noop } from "./noop.ts";
 import camelCase from "camelcase";
 import {
-  type OptionValues,
   Command,
-  type ParseOptions,
   Option,
   type OptionValueSource,
+  type OptionValues,
+  type ParseOptions,
 } from "commander";
+import { noop } from "./noop.js";
+
+const commandSettingKeys = [
+  "_allowExcessArguments",
+  "_allowUnknownOption",
+  "_combineFlagAndOptionalValue",
+  "_defaultCommandName",
+  "_enablePositionalOptions",
+  "_passThroughOptions",
+] as const;
+
+type CommandSettingKey = (typeof commandSettingKeys)[number];
+type CommandPrivateState = Command &
+  Record<CommandSettingKey, unknown> & {
+    _versionOptionName?: string;
+  };
+
+const getOrThrow = <Key, Value>(map: Map<Key, Value>, key: Key): Value => {
+  const value = map.get(key);
+  if (value === undefined) {
+    throw new Error("Expected map value to be present");
+  }
+
+  return value;
+};
 
 export const findMissingOptions = (
   command: Command,
@@ -14,16 +38,20 @@ export const findMissingOptions = (
 ) => {
   const missingOptionsByCommand = new Map<Command, Set<string>>();
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
   let currentCommand: Command | undefined | null = command;
 
   while (currentCommand) {
     const missingOptions = new Set<string>();
     const providedOptions = providedOptionsByCommand.get(currentCommand);
     for (const option of currentCommand.options) {
-      const key = option.negate
-        ? camelCase(option.long!.replace(/^--no-/, ""))
-        : camelCase((option.long ?? option.short)!);
+      const optionName = option.negate
+        ? option.long?.replace(/^--no-/, "")
+        : (option.long ?? option.short);
+      if (!optionName) {
+        continue;
+      }
+
+      const key = camelCase(optionName);
 
       if (providedOptions?.[key] !== undefined) {
         continue;
@@ -62,16 +90,11 @@ export type PartialParseResult = {
 };
 
 const copyCommandSettings = (source: Command, target: Command) => {
-  for (const keysToCopy of [
-    "_allowExcessArguments",
-    "_allowUnknownOption",
-    "_combineFlagAndOptionalValue",
-    "_defaultCommandName",
-    "_enablePositionalOptions",
-    "_passThroughOptions",
-  ] as const) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    (target as any)[keysToCopy] = (source as any)[keysToCopy];
+  const sourcePrivateState = source as CommandPrivateState;
+  const targetPrivateState = target as CommandPrivateState;
+
+  for (const key of commandSettingKeys) {
+    targetPrivateState[key] = sourcePrivateState[key];
   }
 
   target.name(source.name());
@@ -80,14 +103,13 @@ const copyCommandSettings = (source: Command, target: Command) => {
     target.addArgument(argument);
   }
 
-  if (source.version()) {
+  const version = source.version();
+  if (version) {
     target.version(
-      source.version()!,
+      version,
       source.options.find(
         (option) =>
-          option.attributeName() ===
-          (source as Command & { _versionOptionName: string })
-            ._versionOptionName,
+          option.attributeName() === sourcePrivateState._versionOptionName,
       )?.flags,
     );
   }
@@ -183,11 +205,12 @@ export const partialParse = (
 
     parserCommand.hook("preSubcommand", (thisCommand, actionCommand) => {
       for (const cmd of [thisCommand, actionCommand]) {
-        providedOptions.set(commandsMap.get(cmd)!, cmd.opts());
+        const originalCommand = getOrThrow(commandsMap, cmd);
+        providedOptions.set(originalCommand, cmd.opts());
 
         for (const optionKey of Object.keys(cmd.opts())) {
           setProvidedOptionSource(
-            cmd,
+            originalCommand,
             optionKey,
             cmd.getOptionValueSource(optionKey),
           );
@@ -196,14 +219,12 @@ export const partialParse = (
     });
 
     parserCommand.action(() => {
-      providedOptions.set(
-        commandsMap.get(parserCommand)!,
-        parserCommand.opts(),
-      );
+      const originalCommand = getOrThrow(commandsMap, parserCommand);
+      providedOptions.set(originalCommand, parserCommand.opts());
 
       for (const optionKey of Object.keys(parserCommand.opts())) {
         setProvidedOptionSource(
-          commandsMap.get(parserCommand)!,
+          originalCommand,
           optionKey,
           parserCommand.getOptionValueSource(optionKey),
         );

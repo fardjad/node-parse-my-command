@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "allowImportingTsExtensions": true,
     "strictNullChecks": true,
+    "types": ["bun-types"],
     "noEmit": true
   }
 }

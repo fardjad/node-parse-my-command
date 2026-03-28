@@ -1,4 +1,3 @@
-/* eslint-disable capitalized-comments */
 import { Command } from "commander";
 import { partialParse } from "parse-my-command";
 
