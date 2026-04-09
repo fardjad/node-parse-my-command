@@ -10,6 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@main
+        with:
+          app-id: ${{ vars.AUTO_MAINTENANCE_APP_ID }}
+          private-key: ${{ secrets.AUTO_MAINTENANCE_APP_PRIVATE_KEY }}
       - uses: oven-sh/setup-bun@main
         with:
           bun-version: latest
@@ -22,7 +28,7 @@ jobs:
             ${{ runner.os }}-bun-
       - uses: fardjad/my-actions/automatic-bun-update@main
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ steps.app-token.outputs.token }}
           upgrade-options: --latest --no-progress
           post-update-commands: |
             bun run fix
