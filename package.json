@@ -1,6 +1,6 @@
 {
   "name": "parse-my-command",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "description": "Parse argv with Commander.js without executing the command",
   "keywords": [
     "parser",
@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "camelcase": "^9.0.0",
-    "commander": "^14.0.3"
+    "commander": "^15.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
