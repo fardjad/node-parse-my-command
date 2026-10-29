@@ -59,7 +59,6 @@ More examples can be found in the [examples](/examples/) directory.
 ## Error Handling
 
 `partialParse` throws in the following cases:
-
 1. In all cases where your `Command` with the
    [default `exitCallback`](https://github.com/tj/commander.js#override-exit-and-output-handling)
    would throw an error (e.g. when displaying help)
@@ -73,7 +72,6 @@ More examples can be found in the [examples](/examples/) directory.
 This module works by creating a (best-effort) clone of the command and its
 subcommands, setting the actions to no-op functions, and then parsing the
 `argv` with the cloned instance. This approach might have some limitations:
-
 1. The implementation might break if Commander.js changes its internals
 2. Custom argument and option processors are assumed to be pure functions
 3. Hook listeners attached to the commands will be ignored
